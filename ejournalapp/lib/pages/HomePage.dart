@@ -19,6 +19,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {  
   Notice? noticer;
   Settings? settindsObject;
+  Schedule? schedule;
   SharedPreferences? prefs; 
   int _currentIndex = 0;
   PageController control = PageController();
@@ -27,6 +28,7 @@ class _HomePageState extends State<HomePage> {
 
 
   generalInfo general = generalInfo();
+
 
 
 
@@ -40,14 +42,17 @@ class _HomePageState extends State<HomePage> {
   }
   
   initOthers(){
-    noticer = Notice(general);
+    noticer = Notice(general, this);
     settindsObject = Settings(general, this);
+    schedule = Schedule(general);
   }
 
 
-  _update(){
+  _update({Function? fn = null}){
     setState(() {
-      
+      if (fn != null){
+        fn();
+      }
     });
   }
 
@@ -63,7 +68,6 @@ class _HomePageState extends State<HomePage> {
         ),
         body:  Center(
             child:PageView(
-              
               controller: control,
               children: [
                 Container(           //отметить
@@ -78,7 +82,19 @@ class _HomePageState extends State<HomePage> {
                                 setState((){
                                   noticer!.date = noticer!.date.add(const Duration(days:-1));
                                   if (noticer!.date.weekday == 7)noticer!.date = noticer!.date.add(const Duration(days:-1));
+                                  noticer!.updateDate();
+
+                                  /*http.get(
+                                    Uri.parse('${general._host}pass?start=${DateFormat("yyyy-MM-dd").format(noticer!.date)}&end=${DateFormat("yyyy-MM-dd").format(noticer!.date)}&groupId=${general._groupId}'),
+                                    headers: {"Authorization":"Bearer ${general._token}"}
                                   
+                                  ).then((response){
+
+                                    var answer = jsonDecode(utf8.decode(response.body.codeUnits));
+                                    noticer!.Passes = answer["detail"];
+                                    print(noticer!.Passes);
+                                    noticer!.viewDay();
+                                  });*/
                                 });
                               },
                               icon: const Icon(Icons.chevron_left),
@@ -93,13 +109,24 @@ class _HomePageState extends State<HomePage> {
                                     foregroundColor: MaterialStateProperty.resolveWith((Set<MaterialState> state){return Colors.white;})
                                   ),
                                   onPressed: () async{
-                                    DateTime? newDate = await showDatePicker(context: context, initialDate: noticer!.date, firstDate: DateTime(2023), lastDate: DateTime(noticer!.date.year.toInt()+1), locale: Locale('ru', 'BY'));
+                                    DateTime? newDate = await showDatePicker(context: context, initialDate: noticer!.date, firstDate: DateTime(2023), lastDate: DateTime(noticer!.date.year.toInt()+1), locale: const Locale('ru', 'BY'));
                                     
                                     if (newDate != null){
                                       setState(() {
                                         if (newDate.weekday == 7){noticer!.date = newDate.add(const Duration(days:-1));}//понедельник - 7, вторник - 1
                                         else {noticer!.date = newDate;}
-                                        noticer!.viewDay();
+                                        noticer!.updateDate();
+                                        /*http.get(
+                                          Uri.parse('${general._host}pass?start=${DateFormat("yyyy-MM-dd").format(noticer!.date)}&end=${DateFormat("yyyy-MM-dd").format(noticer!.date)}&groupId=${general._groupId}'),
+                                          headers: {"Authorization":"Bearer ${general._token}"}
+                                        
+                                        ).then((response){
+
+                                          var answer = jsonDecode(utf8.decode(response.body.codeUnits));
+                                          noticer!.Passes = answer["detail"];
+
+                                          noticer!.viewDay();
+                                        });*/
                                       });
                                       setState(() {});
                                       
@@ -125,6 +152,18 @@ class _HomePageState extends State<HomePage> {
                                   
                                   noticer!.date = noticer!.date.add(const Duration(days:1));
                                   if (noticer!.date.weekday == 7)noticer!.date = noticer!.date.add(const Duration(days:1));
+                                  noticer!.updateDate();
+                                  /*http.get(
+                                    Uri.parse('${general._host}pass?start=${DateFormat("yyyy-MM-dd").format(noticer!.date)}&end=${DateFormat("yyyy-MM-dd").format(noticer!.date)}&groupId=${general._groupId}'),
+                                    headers: {"Authorization":"Bearer ${general._token}"}
+                                  
+                                  ).then((response){
+
+                                    var answer = jsonDecode(utf8.decode(response.body.codeUnits));
+                                    noticer!.Passes = answer["detail"];
+
+                                    noticer!.viewDay();
+                                  });*/
                                 });
                                 
                               },
@@ -134,12 +173,12 @@ class _HomePageState extends State<HomePage> {
                             )
                           ]
                         ),
-                        if (noticer != null)noticer!.tableForNotice
+                        if (noticer != null && noticer!.mainActiv  != null)noticer!.mainActiv!
                         
                       ]
                     ),
                   ),
-                Container(           // Пропуски за месяц
+                Container(           // отметить период
                   
 
 
@@ -150,12 +189,94 @@ class _HomePageState extends State<HomePage> {
 
 
                 ),
+
+                Container(           // расписание
+                  child: Column(
+                    children: [
+                      Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children:[
+                            IconButton(
+                              onPressed: (){
+                                setState(() {
+                                  schedule?.dayMinus(); 
+                                });
+                                
+                                
+                              },
+                              icon: const Icon(Icons.chevron_left),
+                              color: Colors.white,
+                              iconSize: 30,
+                            ),
+                            Column(
+                              children: [
+                                Text(
+                                  schedule?.currentDay ?? "",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20
+                                  ),
+                                ),
+                                TextButton(
+                                  style: ButtonStyle(
+                                    backgroundColor: MaterialStateProperty.all(const Color.fromARGB(255, 169, 10, 222)),
+                                    foregroundColor: MaterialStateProperty.resolveWith((Set<MaterialState> state){return Colors.white;})
+                                  ),
+                                  onPressed: (){
+                                    setState(() {
+                                      schedule?.weekChange();
+                                    });
+                                  },
+                                  child: Text(
+                                    schedule?.currentWeek ?? "",
+                                    style: TextStyle(
+
+                                      fontSize: 20
+                                    )
+                                  )
+                                )
+                              ],
+                            ),          
+                            IconButton(
+                              onPressed: (){
+                                setState(() {
+                                  schedule?.dayPlus(); 
+                                });
+                                       
+                              },
+                              icon: const Icon(Icons.navigate_next),
+                              color: Colors.white,
+                              iconSize: 30,
+                            )
+                          ]
+                        ),
+                      Padding(
+                        padding: EdgeInsets.all(20),
+                        child: schedule?.scheduleForDay ?? Column(),
+                      )
+                      
+
+
+
+
+
+
+
+
+
+
+                    ],
+                  ),
+                  
+
+                ),
                 Container(           //карточки студентов
                   child: Column(
                     children:[
                       Expanded(
                         child: GridView.builder(
-                          gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                             maxCrossAxisExtent: 500,
                             mainAxisExtent: 300,
                             mainAxisSpacing: 0
@@ -177,7 +298,7 @@ class _HomePageState extends State<HomePage> {
                                 });
                               },
                               label: const Text("Добавить"),
-                              icon: Icon(Icons.add)
+                              icon: const Icon(Icons.add)
                             )
                           ),
                           const SizedBox(
@@ -191,7 +312,7 @@ class _HomePageState extends State<HomePage> {
                                   showDialog(
                                   context: context,
                                   builder: (context) {
-                                    Future.delayed(Duration(seconds: 1), () {
+                                    Future.delayed(const Duration(seconds: 1), () {
                                       Navigator.of(context).pop(true);
                                     });
                                     return const AlertDialog(
@@ -204,8 +325,8 @@ class _HomePageState extends State<HomePage> {
                                 }
 
                               },
-                              label: Text("Сохранить"),
-                              icon: Icon(Icons.save)
+                              label: const Text("Сохранить"),
+                              icon: const Icon(Icons.save)
                             )
                           )
                         ]
@@ -230,7 +351,9 @@ class _HomePageState extends State<HomePage> {
             BottomNavigationBarItem(icon: Icon(Icons.edit), label: "Отметить"),
             BottomNavigationBarItem(icon: Icon(Icons.edit_calendar), label: "Множественная выборка"),
             BottomNavigationBarItem(icon: Icon(Icons.table_view), label: "Пропуски за месяц"),
+            BottomNavigationBarItem(icon: Icon(Icons.calendar_month), label: "Расписание"),
             BottomNavigationBarItem(icon: Icon(Icons.settings), label: "Настройки"),
+            
           ],
           backgroundColor: const Color.fromARGB(255, 41, 41, 41),
           currentIndex: _currentIndex,
@@ -251,6 +374,170 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
+
+
+
+
+class Schedule{
+  int gDay = 0;
+  int week = 0;
+  int day = 0;
+  late generalInfo general;
+  StatefulBuilder scheduleForDay=StatefulBuilder(builder: (context, setstate){
+    return Column();
+  });
+  
+  List<String> WeekDays = ['Понедельник', 'Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'];
+  List<String> WeekTypes= ['Верхняя', 'Нижняя'];
+
+  List<List<List<Map>>> Days = [[
+    [{
+    "numberOfLesson": 1,
+    "Lesson": "Криптография"
+
+    },
+    {
+      "numberOfLesson": 1,
+      "Lesson": "Аппаратка"
+
+    }],
+    [{
+      "numberOfLesson": 2,
+      "Lesson": "Вышмат"
+
+    }]
+  ]];
+  String currentDay = "";
+  String currentWeek = "";
+  Schedule(generalInfo obj){
+    general = generalInfo.from(obj);
+    updateDayFields();
+
+
+  }
+
+  updateDayFields(){
+    week = (gDay / 7).truncate();
+    day = (gDay % 7);
+    print('$gDay $week $day');
+    currentDay = WeekDays[day];
+    currentWeek = WeekTypes[week];
+
+    scheduleForDay=StatefulBuilder(builder: (context, setstate){
+      return Column(
+        children: List.generate(Days[gDay].length, (index){
+          
+          List<Widget> tempChildren = [];
+          for(var i=0; i<Days[gDay][index].length;i++){
+            var item = Days[gDay][index][i];
+            tempChildren.add(
+              TextButton(
+                onPressed: (){
+
+                },
+                child: Text(
+                  item["Lesson"],
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18
+                  ),
+                )
+              )
+            );
+
+            if (i != Days[gDay][index].length-1){
+              tempChildren.add(
+                Divider(
+                  color: Colors.white,
+                  thickness: 2,
+                )
+              );
+            }
+          }
+
+          return Card(
+            color: const Color.fromARGB(255, 50, 50, 50),
+            child: Row(
+              
+              children: [
+                Padding(
+                  padding: EdgeInsets.fromLTRB(10, 10, 15, 10),
+                  child: Text(
+                    '${Days[gDay][index][0]["numberOfLesson"]}.',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18
+                    ),
+                  )
+                ),
+                SizedBox(
+                  width: 2,
+                  
+                  child: Expanded(
+                    child: VerticalDivider(
+                    color: Colors.white,
+                    thickness: 2,
+                  ),
+                  ),
+                ),
+
+                
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: tempChildren
+                  )
+                )
+              ],
+            ),
+          );
+        }),
+      );
+    });
+
+  }
+
+  dayPlus(){
+    if (gDay < 12) gDay++;
+    if (gDay % 7 == 6) gDay++;
+    updateDayFields();
+  }
+
+  dayMinus(){
+    if (gDay > 0 ) gDay--;
+    if (gDay % 7 == 1 && (gDay / 7).truncate() == 1) gDay--;
+    updateDayFields();
+  }
+
+  weekChange(){
+    gDay =(gDay + 7) % 14;
+    updateDayFields();
+  }
+
+  
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 class generalInfo{
@@ -294,245 +581,782 @@ class generalInfo{
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 class Notice{
   List<String> WeekDays = ['Понедельник', 'Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'];
   late DateTime date;
-  Table tableForNotice = Table();
+  StatefulBuilder? mainActiv;
   late generalInfo general;
   List Students = [];
-  dynamic Shedule = [];
+  Map Schedule = {};
+  dynamic Passes = [];
+  late _HomePageState hmPgstrt;
 
-  Notice(generalInfo obj){
+  Notice(generalInfo obj, _HomePageState main){
+    hmPgstrt = main;
     general = generalInfo.from(obj);
     date = DateTime.now();
     if (date.weekday == 7)date = date.add(const Duration(days:-1));
-    //print(obj._token);
-    http.get(Uri.parse('${general._host}groupinfo'),headers: {"Authorization":"Bearer ${general._token}"}).then((response){
+
+    http.get(
+      Uri.parse('${general._host}schedule/${general._groupId}')
+    ).then((response){
       var answer = jsonDecode(utf8.decode(response.body.codeUnits));
-      if (answer["detail"] == "success"){
-        Students = answer["students"];
-        http.get(Uri.parse('${general._host}schedule/${general._groupId}')).then((response){
-          if (response.statusCode == 200){
-            Shedule = jsonDecode(utf8.decode(response.body.codeUnits))["Schedule"];
-            viewDay();
-          }
-        });
-        /*tableForNotice = DataTable(
-          columns: columns,
-          rows: rows
-        )*/
-      }
-
-
+      //print(answer);
+      Schedule = answer["detail"];
+      updateDate();
 
     });
-  }
 
-  getCell(Widget wdgt){
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 4, horizontal: 4),
-      child: Center(
-        child: wdgt,
-      ),
-    );
-  }
+    http.get(
+      Uri.parse('${general._host}groupinfo'),
+      headers: {"Authorization":"Bearer ${general._token}"}
+    )
+    .then((response){
+      var answer = jsonDecode(utf8.decode(response.body.codeUnits));
+      //print(answer);
+      Students = answer["detail"];
+      updateDate();
+    });
 
-  viewDay(){
-    var weekType = "Верхняя";
-    print(Shedule[weekType][WeekDays[date.weekday-1]]);
-    var response = [];
-    double k = 1/3;
-    int lessonCount = Shedule[weekType][WeekDays[date.weekday-1]].length;
-    Map<int, TableColumnWidth> widths = {0:FlexColumnWidth(k* lessonCount / (1-k))};
-    for(int i=0;i<=lessonCount;i++){
-      widths[i+1] = FlexColumnWidth(1);
-    }
+    
 
-    print(widths);
-    tableForNotice = Table(
-      columnWidths: widths,
-      border: TableBorder.all(
-        color: Colors.white,
-        borderRadius: BorderRadius.all(Radius.circular(5))
-      ),
-      children: List.generate(Students.length+1, (index) {
-        if (index == 0){
-          return TableRow(
-            children: List.generate(Shedule[weekType][WeekDays[date.weekday-1]].length+1,
-            (index){
-              if (index == 0){
-                return getCell(Text(" ", style: TextStyle(color: Colors.white)));
-              }
-              return getCell(Text(Shedule[weekType][WeekDays[date.weekday-1]][index-1]["numberOfLesson"].toString(), style: TextStyle(color: Colors.white)));
-              
-            })
-          );
+    /*http.get(Uri.parse('${general._host}groupinfo'),headers: {"Authorization":"Bearer ${general._token}"}).then((response){
+      var answer = jsonDecode(utf8.decode(response.body.codeUnits));      
+      Students = answer["detail"];
+      http.get(Uri.parse('${general._host}schedule/${general._groupId}')).then((response){
+        if (response.statusCode == 200){
+          Shedule = jsonDecode(utf8.decode(response.body.codeUnits))["detail"];
+          print(Shedule["Верхняя"]["Среда"]);
+          http.get(
+            Uri.parse('${general._host}pass?start=${DateFormat("yyyy-MM-dd").format(date)}&end=${DateFormat("yyyy-MM-dd").format(date)}&groupId=${general._groupId}'),
+            headers: {"Authorization":"Bearer ${general._token}"}
+          
+          ).then((response){
+
+            var answer = jsonDecode(utf8.decode(response.body.codeUnits));
+            Passes = answer["detail"];
+            
+            viewDay();
+          });
+          
         }
-        return TableRow(
-          children: List.generate(Shedule[weekType][WeekDays[date.weekday-1]].length+1, (i){
-            if (i==0){
-              return getCell(Text(Students[index-1]["lastname"], style: TextStyle(color: Colors.white)));   
-            }
-            return getCell(pass().btn);
-            
-            
-            
-            
-          })
-        );
-      })
-
-
-      
-    );
-    /*http.get(Uri.parse('${general._host}pass/?start=${}&end=${}')).then((response){
-
+      });
     });*/
   }
 
+  updateDate(){
+    http.get(
+      Uri.parse('${general._host}pass?start=${DateFormat("yyyy-MM-dd").format(date)}&end=${DateFormat("yyyy-MM-dd").format(date)}&groupId=${general._groupId}'),
+      headers: {"Authorization":"Bearer ${general._token}"}
+    )
+    .then((response){
+      var answer = jsonDecode(utf8.decode(response.body.codeUnits));
+      print(answer);
+      Passes = answer["detail"];
+      updateMainActiv();
+    });
+  }
 
+  updateMainActiv(){
+    print(Students);
+    print(Schedule);
+    if(!(Students == []) && mapEquals({}, Schedule)){
+      mainActiv = StatefulBuilder(
+        builder: (context, setState){
+        return const Expanded(
+          child: Center(
+            child: Text(
+              "Данные загружаются",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18
+              )
+              ),
+          )
+        );
+      });
+    }
+    else if(Students == [] && !mapEquals({}, Schedule)){
+      mainActiv = StatefulBuilder(
+        builder: (context, setState){
+        return const Expanded(
+          child: Center(
+            child: Text(
+              "Похоже расписания на этот день нет",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18
+              )
+              ),
+          )
+        );
+      });
+    }
+    else if (Students == [] && mapEquals({}, Schedule)){
+      mainActiv = StatefulBuilder(
+        builder: (context, setState){
+        return const Expanded(
+          child: Center(
+            child: Text(
+              "Похоже некоторые данные отстуствуют\nПроверьте их наличие",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18
+              )
+              ),
+          )
+        );
+      });
+    }
+    else{
+      var weektype = "Верхняя";
+      var weekdayT = WeekDays[date.weekday-1];
+      var scheduleForDay = Schedule[weektype][weekdayT];
+
+      getCell(Widget wdgt){
+        return Padding(
+          padding: const EdgeInsets.all(3),
+          child: Center(
+            child:wdgt
+          )
+        );
+      }
+
+      TableRow headOfTable = TableRow(
+        children: List.generate(scheduleForDay.length+1, (index){
+          if (index == 0) {
+            return getCell(const Text(
+              " ",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 15
+              ),
+            ));
+          }
+
+
+          var lessons = scheduleForDay[index-1];
+          
+          var button;
+          if (lessons is Map){
+            
+            var dates;
+
+            if (lessons["dates"] != null){
+              
+              dates = [
+                Text(
+                  "Даты прохождения пар: ${lessons["dates"]} ",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16
+                  ),
+                ),
+                SizedBox(
+                  height: 10,
+                )
+              ];
+            }
+            var dialogWnd = [
+              Text(
+                "Информация о паре",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20
+                ),
+              ),
+              SizedBox(
+                height: 10,
+              ),
+
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Пара: ${lessons["LessonName"]}",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16
+                    ),
+                  ),
+                  SizedBox(
+                    height: 10,
+                  ),
+
+                  Text(
+                    "Тип: ${lessons["LessonType"]}",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16
+                    ),
+                  ),
+                  SizedBox(
+                    height: 10,
+                  ),
+                ],
+              ),
+              if (dates != null) Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: dates),
+                
+              
+
+            ];
+
+
+
+      
+
+            button = TextButton(
+              onPressed: (){
+                showDialog(
+                  context: hmPgstrt.context,
+                  builder: (context){
+                    return SimpleDialog(
+                      backgroundColor: Color.fromARGB(255, 24, 24, 24),
+                      children: [Padding(
+                        padding: EdgeInsets.all(20),
+                        child: Column(
+                          children: dialogWnd
+                        ),
+                      )]
+                    );
+                  }
+                );
+              },
+               child: Text(lessons["numberOfLesson"].toString())
+            );
+          }
+          else if (lessons is List){
+
+
+            var dialogWnd = [
+              Text(
+                "Информация о паре",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20
+                ),
+              ),
+              SizedBox(
+                height: 10,
+              ),
+            ];
+
+
+            for (int i=0;i<lessons.length;i++){
+              var lesson = lessons[i];
+              var dates;
+
+              if (lesson["dates"] != null){
+                var datesString = "";
+                
+                for (var oneDate in lesson["dates"]){
+                  var dateForm = DateFormat("yyyy-MM-dd").parse(oneDate);
+                  
+                  datesString += "${DateFormat("dd.MM.yy").format(dateForm)}, ";
+                }
+
+                dates = [
+                  Text(
+                    "Даты прохождения пар: ${datesString} ",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16
+                    ),
+                  ),
+                  SizedBox(
+                    height: 10,
+                  )
+                ];
+              }
+
+              var temp = [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Пара: ${lesson["LessonName"]}",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16
+                      ),
+                    ),
+                    SizedBox(
+                      height: 10,
+                    ),
+
+                    Text(
+                      "Тип: ${lesson["LessonType"]}",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16
+                      ),
+                    ),
+                    SizedBox(
+                      height: 10,
+                    ),
+                  ],
+                ),
+                if (dates != null) Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: dates),
+                if(i!=lessons.length-1)Divider(
+                  color: Colors.white,
+                  thickness: 3,
+                )
+                
+
+              ];
+
+              dialogWnd.addAll(temp);
+
+            }
+
+
+
+
+
+
+
+
+            button = TextButton(
+              onPressed: (){
+                showDialog(
+                  context: hmPgstrt.context,
+                  builder: (context){
+                    return SimpleDialog(
+                      backgroundColor: Color.fromARGB(255, 24, 24, 24),
+                      children: [Padding(
+                        padding: EdgeInsets.all(20),
+                        child: Column(
+                          children: dialogWnd
+                        ),
+                      )]
+                    );
+                  }
+                );
+              },
+               child: Text(lessons[0]["numberOfLesson"].toString())
+            );
+          }
+
+
+          return getCell(button);
+        })
+      );
+
+      print(scheduleForDay);
+      
+
+      var bodyOfTable = List.generate(Students.length, (i){
+          return TableRow(
+            children: List.generate(scheduleForDay.length+1, (index){
+
+              var student = Students[i];
+
+              if (index == 0) {
+                return getCell(
+                Text(
+                  student["lastname"],
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 15
+                  ),
+                  ));
+              }
+
+
+              Widget cell = Text("124");
+
+              var lesson = scheduleForDay[index-1];
+              if (lesson is Map){
+
+                if(lesson["subgroup"]==1 && lesson["subgroupStudents"].indexOf(student["id"]) == -1 ){
+                  cell = Container(
+                      color: Color.fromARGB(255, 50, 50, 50),
+                      child: Text("   "),
+                  );
+                }
+                else if (lesson["subgroup"]==0 || (lesson["subgroup"]==1 && lesson["subgroupStudents"].indexOf(student["id"])!= -1  )){
+                  //12345
+                  print("-----------${DateFormat("yyyy-MM-dd").format(date)}");
+                  var passInfo;
+                  for (var item in Passes){
+                    if (item["studentId"] == student["id"] && item["numberOfLesson"]==lesson["numberOfLesson"]){
+                      passInfo = item;
+                      break;
+                    }
+                  }
+
+                  if (passInfo==null){
+                    cell = Pass(general, student, lesson, DateFormat("yyyy-MM-dd").format(date),hmPgstrt);
+                  }
+                  else{
+                    cell = Pass(general, student, lesson, DateFormat("yyyy-MM-dd").format(date),hmPgstrt, infoFromDB: passInfo);
+                  }
+
+                  
+                }
+              }
+              else if(lesson is List){
+                var temp;
+                for(var oneLesson in lesson){
+                  if (oneLesson["subgroup"]==1 && oneLesson["subgroupStudents"].indexOf(student["id"]) != -1){
+                    //12345
+
+                    var passInfo;
+                    print(Passes);
+                    for (var item in Passes){
+                      print("${item["studentId"]}--${student["id"]}--${item["numberOfLesson"]}--${oneLesson["numberOfLesson"]}");
+                      if (item["studentId"] == student["id"] && item["numberOfLesson"]==oneLesson["numberOfLesson"]){
+                        passInfo = item;
+                        break;
+                      }
+                    }
+                    print("------------${passInfo}");
+
+                    if (passInfo==null){
+                      temp = Pass(general, student, oneLesson, DateFormat("yyyy-MM-dd").format(date),hmPgstrt);
+                    }
+                    else{
+                      temp = Pass(general, student, oneLesson, DateFormat("yyyy-MM-dd").format(date), hmPgstrt, infoFromDB: passInfo);
+                    }
+
+
+
+
+                    break;
+                  }
+                }
+                if (temp == null){
+                  temp = Container(
+                      color: Color.fromARGB(255, 50, 50, 50),
+                      child: Text("   "),
+                  );
+                }
+                
+                cell = temp;
+              }
+
+
+              return (cell);
+
+
+
+
+            })
+          );
+
+      });
+
+      bodyOfTable.insert(0, headOfTable);
+
+      double k = 1/3;
+      int lessonCount = scheduleForDay.length;
+      Map<int, TableColumnWidth> widths = {0:FlexColumnWidth(k* lessonCount / (1-k))};
+      for(int i=0;i<lessonCount;i++){
+        widths[i+1] = FlexColumnWidth(1);
+      }
+
+      mainActiv = StatefulBuilder(
+        builder: (context, setState){
+        return Expanded(
+          child: Center(
+            child: Table(
+              defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+              columnWidths: (lessonCount != 0) ? widths: null,
+              border: TableBorder.all(
+                color: Colors.white,
+                width: 2,
+              ),
+              children: bodyOfTable
+              )
+          )
+        );
+      });
+    }
+
+    hmPgstrt._update();
+  } 
 
 }
 
 
-class pass{
-  String text = "    ";
-  late TextButton btn;
-  int state = 0;
-  Function()? fn;
 
-  pass(){
-    update();
+
+
+
+
+class Pass extends StatefulWidget{
+  late generalInfo general;
+  late Map student;
+  late Map schedule;
+  late String date;
+  String text = "     ";
+  bool state = false;
+  Map passInfo = {};
+  TextEditingController docId = TextEditingController();
+  int passType = 1;
+  String wndPassInfo = "";
+  late _HomePageState hmpg;
+  Pass(generalInfo obj, this.student, this.schedule, this.date, this.hmpg,  {infoFromDB}){
+    general = generalInfo.from(obj);
+    print(date);
+    if (infoFromDB != null){
+      passInfo = infoFromDB;
+      state = true;
+      text = (passInfo["typeId"] == 1 ) ? "2" : ((passInfo["typeId"] == 2 ) ? "②" : ((passInfo["typeId"] == 3 ) ? "з" : " ")); 
+      if (passInfo["documentId"] != null) docId.text = passInfo["documentId"].toString();
+      passType = passInfo["typeId"] - 1;
+
+      wndPassInfo = (passType == 0 ) ? "Неуважительный" : ((passType == 1 ) ? "Уважительный" : ((passType == 2 ) ? "По заявлению" : " "));
+    }
   }
 
-  setFn(Function() fn){
-    this.fn = fn;
-  }
+  @override
+  _PassState createState() => _PassState();
 
-  update(){
-    btn = TextButton(
-      child: Text(
-        text,
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 15
-        )
-      ),
-      onPressed: (){
-        if (state==0){
-          state = 1;
-        }
-        if (state==1){
-          fn!();
-        }
-        
-      },
-      onLongPress: (){
-        if (state==1){
-          state = 0;
-        }
-      },
-    );
-  }
-
-
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*class passTable extends StatefulWidget {
-  List studentInfo = [];
-  int month = 0;
-  int year = 0;
-  
-  passTable({super.key, group, month, year}){
+  onPress(BuildContext context){
     
   }
   
-  @override
-  // ignore: library_private_types_in_public_api
-  _passTableState createState() => _passTableState();
 }
 
-class _passTableState extends State<passTable> { 
+class _PassState extends State<Pass>{
   @override
   Widget build(BuildContext context) {
     // TODO: implement build
-    return DataTable(
-      border: TableBorder.all(
-        color: Colors.white,
-        width: 3,
-      ),
-      showBottomBorder : true,
-      columns: [
-        DataColumn(label: Text("Фамилия")),
-        DataColumn(label: Text("Уважительные")),
-        DataColumn(label: Text("Неуважительные")),
-        DataColumn(label: Text("По заявлению")),
-      ],
-      rows: List<DataRow>.generate(5,
-      (index) {
-        return DataRow(cells: [
-          DataCell(Text("fgh")),
-          DataCell(Text("fgh")),
-          DataCell(Text("fgh")),
-          DataCell(Text("fgh")),
-        ]);
-      })
-    );
+    return TextButton(
+      onPressed: (){
+        if (!widget.state){
+          http.post(
+            Uri.parse('${widget.general._host}pass'),
+            headers: {"Authorization":"Bearer ${widget.general._token}", "Content-type":"application/json"},
+            body: jsonEncode({
+              "studentId": widget.student["id"],
+              "date": widget.date,
+              "scheduleId": widget.schedule["id"],
+              "type": 1
+            })
+          )
+          .then((response){
+            var answer = jsonDecode(utf8.decode(response.body.codeUnits));
+            print(answer);
+            if (answer["status"]=="Success"){
+              setState((){
+                widget.state = true;
+                widget.text = "2";
+              });
+              widget.passInfo = answer["detail"];
+            }
+            
+          });
+        }
+        else{
+          showDialog(
+            context: context,
+            builder: (context) => StatefulBuilder(builder: (context, ss)=>
+              SimpleDialog(
+                backgroundColor: Color.fromARGB(255, 66, 66, 66),
+                children: [
+                  Padding(
+                    padding: EdgeInsets.all(25),
+                    child: Column(
+                      children: [
+                        const Text(
+                          "Редактирование пропуска",
+                          style:  TextStyle(
+                            color: Colors.white,
+                            fontSize: 20
+                          )
+                        ),
+                        const SizedBox(
+                          height: 10,
+                        ),
+                        Text(
+                          'Студент: ${widget.student["lastname"]} ${widget.student["firstname"]}',
+                          style:  const TextStyle(
+                            color: Colors.white
+                          )
+                        ),
+                        const SizedBox(
+                          height: 10,
+                        ),
+                        Text(
+                          'Пара: ${widget.schedule["LessonName"]}',
+                          style:  const TextStyle(
+                            color: Colors.white
+                          )
+                        ),
+                        const SizedBox(
+                          height: 10,
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "Тип пропуска",
+                              style:  TextStyle(
+                                color: Colors.white
+                              )
+                            ),
+                            TextButton(
+                              onPressed: (){
+                                
+                                ss(() {
+                                  widget.passType = (++widget.passType) % 3;
+                                  widget.wndPassInfo = (widget.passType == 0 ) ? "Неуважительный" : ((widget.passType == 1 ) ? "Уважительный" : ((widget.passType == 2 ) ? "По заявлению" : " "));
+                                });
+                              },
+                              child: Text(
+                                widget.wndPassInfo
+                              ),
+                              style: ButtonStyle(
+                                backgroundColor: MaterialStateProperty.all(Color.fromARGB(255, 7, 2, 105)),
+                                foregroundColor: MaterialStateProperty.resolveWith((Set<MaterialState> state){return Colors.white;})
+                              )
+                            )
+                          
+                          ],
+                        ),
+                        const SizedBox(
+                          height: 10,
+                        ),
+                        TextField(
+                          controller: widget.docId,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [FilteringTextInputFormatter.digitsOnly], 
+                          decoration: const InputDecoration(
+                          labelText: 'ID документа',
+                          labelStyle: TextStyle(color: Colors.white), 
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.white), 
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.white), 
+                          ),
+                        )
+                        ),
+                        const SizedBox(
+                          height: 10,
+                        ),
+                        TextButton(
+                          onPressed: (){
+
+                            var body =   {
+                              "start" : widget.date,
+                              "end" : widget.date,
+                              "passId" :  widget.passInfo["id"],
+                              "type": widget.passType+1
+                            };
+                            if (widget.docId.text != "")body["docId"] = int.parse(widget.docId.text);
+
+                            http.patch(
+                              Uri.parse('${widget.general._host}pass/${widget.student["id"]}'),
+                              headers: {"Authorization":"Bearer ${widget.general._token}", "Content-type":"application/json"}, 
+                              body : jsonEncode(body)
+
+                            ).then((response){
+                              var answer = jsonDecode(utf8.decode(response.body.codeUnits));
+                              print(answer);
+                              if (answer["status"] == "Success"){
+                                http.get(
+                                  Uri.parse('${widget.general._host}pass/${widget.student["id"]}?start="${widget.date}"&end="${widget.date}"&id=${widget.passInfo["id"]}')
+                                )
+                                .then((response){
+                                  var answer = jsonDecode(utf8.decode(response.body.codeUnits));
+                                  print(answer);
+                                  widget.passInfo = answer["detail"][0];
+
+                                  widget.state = true;
+                                  if (widget.passInfo["documentId"] != null) widget.docId.text = widget.passInfo["documentId"].toString();
+                                  widget.passType = widget.passInfo["typeId"] - 1;
+
+                                  widget.wndPassInfo = (widget.passType == 0 ) ? "Неуважительный" : ((widget.passType == 1 ) ? "Уважительный" : ((widget.passType == 2 ) ? "По заявлению" : " "));
+                                  setState(() {
+                                    widget.text = (widget.passInfo["typeId"] == 1 ) ? "2" : ((widget.passInfo["typeId"] == 2 ) ? "②" : ((widget.passInfo["typeId"] == 3 ) ? "З" : " ")); 
+                                  
+                                  });
+                                  /*widget.hmpg._update(
+                                    fn: (){
+                                      
+                                    }
+                                  );*/
+                                });
+                              }
+                            });
+                          },
+                          child: Text(
+                            "Изменить"
+                          ),
+                          style: ButtonStyle(
+                            backgroundColor: MaterialStateProperty.all(Color.fromARGB(255, 56, 3, 171)),
+                            foregroundColor: MaterialStateProperty.resolveWith((Set<MaterialState> state){return Colors.white;})
+                          )
+                        )
+
+
+
+
+                      ],
+                    ),
+                  )
+                ],
+              )
+
+            )
+          );
+        }
+
+        
+      },
+      onLongPress: (){
+        http.delete(
+            Uri.parse('${widget.general._host}pass/${widget.passInfo["id"]}'),
+            headers: {"Authorization":"Bearer ${widget.general._token}", "Content-type":"application/json"},
+          )
+          .then((response){
+            var answer = jsonDecode(utf8.decode(response.body.codeUnits));
+            print(answer);
+            if (answer["status"]=="Success"){
+              setState((){
+                widget.state = false;
+                widget.text = " ";
+              });
+              widget.passInfo = {};
+              widget.docId.text = "";
+              widget.passType = 0;
+              
+              widget.wndPassInfo = (widget.passType == 0 ) ? "Неуважительный" : ((widget.passType == 1 ) ? "Уважительный" : ((widget.passType == 2 ) ? "По заявлению" : " "));
+            }
+            
+          });
+      },
+      child: Text(widget.text),
+      style: ButtonStyle(
+        //backgroundColor: MaterialStateProperty.all(const Color.fromARGB(255, 169, 10, 222)),
+        foregroundColor: MaterialStateProperty.resolveWith((Set<MaterialState> state){return Colors.white;})
+      )
+      );
   }
-
-
-
-} */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+}
 
 
 
@@ -698,7 +1522,7 @@ class Settings{
         context: Widget.context,
         builder: (context) {
           Future.delayed(const Duration(seconds: 2), () {
-            Navigator.of(context).pop(true);
+            Navigator.of(context).pop(true);  
           });
           return const AlertDialog(
             title: Text('Данные сохранены', textAlign: TextAlign.center,),
@@ -766,36 +1590,36 @@ updateInfo(){
     
     dynamic answer = json.decode(utf8.decode(response.body.codeUnits));
     print(answer);
-    if (answer["detail"]=="success"){
-      for (var student in answer["students"]){
-        int uId = Random().nextInt(1000);
-        while(UniquesId.indexOf(uId)!=-1){
-          uId = Random().nextInt(1000);
-        }
-        var CardInfo = {
-          "fromDB" : true,
-          "uId":uId,
-          "Student":{
-            "id": student["id"],
-            "tgId": student["tgId"],
-            "groupId": student["groupId"],
-            "lastname":student["lastname"],
-            "firstname":student["firstname"],
-            "patronymic":student["patronymic"]
-          },
-          "Card":{
-            "lastname": TextEditingController(),
-            "firstname": TextEditingController(),
-            "patronymic": TextEditingController(),
-            "id": TextEditingController(),
-            "tgId": TextEditingController(),
-            "error": ""
-          }
-        };
-        Cards.add(CardElement(info: CardInfo, parent: this)); 
+    
+    for (var student in answer["detail"]){
+      int uId = Random().nextInt(1000);
+      while(UniquesId.indexOf(uId)!=-1){
+        uId = Random().nextInt(1000);
       }
-      Widget._update();
+      var CardInfo = {
+        "fromDB" : true,
+        "uId":uId,
+        "Student":{
+          "id": student["id"],
+          "tgId": student["tgId"],
+          "groupId": student["groupId"],
+          "lastname":student["lastname"],
+          "firstname":student["firstname"],
+          "patronymic":student["patronymic"]
+        },
+        "Card":{
+          "lastname": TextEditingController(),
+          "firstname": TextEditingController(),
+          "patronymic": TextEditingController(),
+          "id": TextEditingController(),
+          "tgId": TextEditingController(),
+          "error": ""
+        }
+      };
+      Cards.add(CardElement(info: CardInfo, parent: this)); 
     }
+    Widget._update();
+    
   });
   Widget._update();
   }
@@ -844,19 +1668,19 @@ class _CardWidget extends State<CardElement> {
   Widget build(BuildContext context) {
     // TODO: implement build
     return Card(
-      color: Color.fromARGB(255,  19, 19, 19),
+      color: const Color.fromARGB(255,  19, 19, 19),
         child: Column(
           children: [
-            SizedBox(
+            const SizedBox(
               height: 10,
             ),
             Text(
               widget.cardInfo["Card"]["error"],
-              style: TextStyle(
+              style: const TextStyle(
                 color:Colors.red
               )
             ),
-            SizedBox(
+            const SizedBox(
               height: 10,
             ),
             Row(
@@ -884,7 +1708,7 @@ class _CardWidget extends State<CardElement> {
                 )
               ]
             ),
-            SizedBox(
+            const SizedBox(
               height: 10,
             ),
             Row(
@@ -933,7 +1757,7 @@ class _CardWidget extends State<CardElement> {
                 )
               ]
             ),
-            SizedBox(
+            const SizedBox(
               height: 10,
             ),
             Row(
@@ -1018,14 +1842,14 @@ class _CardWidget extends State<CardElement> {
                 }
                 )
               ),
-              icon: Icon(Icons.delete, color: Colors.black), // Устанавливаем цвет иконки
-              label: Text(
+              icon: const Icon(Icons.delete, color: Colors.black), // Устанавливаем цвет иконки
+              label: const Text(
                 "Удалить",
                 style: TextStyle(color: Colors.black), // Устанавливаем цвет текста
               ),
               style: ElevatedButton.styleFrom(
                 //alignment: Alignment.centerLeft, // Выравнивание по левому краю
-                minimumSize: Size(double.infinity, 30),
+                minimumSize: const Size(double.infinity, 30),
                 backgroundColor: Colors.white,
                 disabledBackgroundColor: Colors.grey
                 

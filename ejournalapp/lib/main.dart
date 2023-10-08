@@ -1,4 +1,5 @@
 import 'package:ejournalapp/pages/HomePage.dart';
+import 'package:ejournalapp/pages/mainPage/mainPage.dart';
 import 'package:ejournalapp/pages/regPage.dart';
 import 'package:ejournalapp/pages/startPage.dart';
 import 'package:flutter/material.dart';
@@ -20,6 +21,7 @@ class MyApp extends StatelessWidget {
         '/': (context) => StartPage(),
         '/regScreen': (context) => RegPage(),
         '/homeScreen': (context) => HomePage(),
+        '/newHomeScreen': (context) => newHomePage(),
       },
       localizationsDelegates:  [
       // Другие делегаты локализации...

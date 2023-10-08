@@ -113,7 +113,7 @@ class _RegPageState extends State<RegPage> {
                                 await prefs.setString('Token', answer["token"]);
                                 await prefs.setInt('GroupId', answer["groupId"]);
                                 await prefs.setInt('BossId', answer["bossId"]);
-                                Navigator.pushReplacementNamed(context, '/homeScreen');
+                                Navigator.pushReplacementNamed(context, '/newHomeScreen'/*'/homeScreen'*/);
                             }
                             else{
                               setState((){

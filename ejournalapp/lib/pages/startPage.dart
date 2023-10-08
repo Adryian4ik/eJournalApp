@@ -22,7 +22,7 @@ class _StartPageState extends State<StartPage> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     bool recordExists = prefs.containsKey('Group'); // Проверяем наличие записи
     if (recordExists) {
-      Navigator.pushReplacementNamed(context, '/homeScreen'); // Переход на экран 2
+      Navigator.pushReplacementNamed(context, '/newHomeScreen'); // Переход на экран 2
     }
     else{
       Navigator.pushReplacementNamed(context, '/regScreen');
