@@ -21,7 +21,7 @@ class HomePageState extends State<HomePage> {
   int weekDayIndex = 0;
   DateTime startDate = DateTime.now();
   DateTime endDate = DateTime.now().add(const Duration(days: 30));
-
+  int counter = 0;
   TextEditingController numberOfLesson = TextEditingController();
   TextEditingController newLessonName = TextEditingController();
 
@@ -126,7 +126,6 @@ class HomePageState extends State<HomePage> {
                           }
                           if (snapshot.hasError || !snapshot.data!) {
                             return Container(
-                                color: Colors.white,
                                 child: Column(
                                   children: [
                                     Text(
@@ -209,7 +208,6 @@ class HomePageState extends State<HomePage> {
                                         if (snapshot.hasError ||
                                             !snapshot.data!) {
                                           return Container(
-                                              color: Colors.white,
                                               child: Column(
                                                 children: [
                                                   Text(
@@ -492,7 +490,6 @@ class HomePageState extends State<HomePage> {
                           if (snapshot.hasError) {
                             return Expanded(
                               child: Container(
-                                  color: Colors.white,
                                   child: Column(
                                     children: [
                                       Text(
@@ -772,21 +769,21 @@ class HomePageState extends State<HomePage> {
                                 ),
                                 TextField(
                                   controller: numberOfLesson,
-                                  style: const TextStyle(color: Colors.white),
+                                  style: TextStyle(color: MyColors.fontColor),
                                   inputFormatters: [
                                     FilteringTextInputFormatter.digitsOnly
                                   ],
                                   keyboardType: TextInputType.number,
-                                  decoration: const InputDecoration(
+                                  decoration: InputDecoration(
                                     labelText: 'Номер пары',
-                                    labelStyle: TextStyle(color: Colors.white),
+                                    labelStyle: TextStyle(color:  MyColors.fontColor),
                                     enabledBorder: OutlineInputBorder(
                                       borderSide:
-                                          BorderSide(color: Colors.white),
+                                          BorderSide(color:  MyColors.fontColor),
                                     ),
                                     focusedBorder: OutlineInputBorder(
                                       borderSide:
-                                          BorderSide(color: Colors.white),
+                                          BorderSide(color:  MyColors.fontColor),
                                     ),
                                   ),
                                 ),
@@ -815,19 +812,19 @@ class HomePageState extends State<HomePage> {
                                 ((lessonIndex == -1)
                                     ? (TextField(
                                         controller: newLessonName,
-                                        style: const TextStyle(
-                                            color: Colors.white),
-                                        decoration: const InputDecoration(
+                                        style: TextStyle(
+                                            color:  MyColors.fontColor),
+                                        decoration:  InputDecoration(
                                           labelText: 'Название пары',
                                           labelStyle:
-                                              TextStyle(color: Colors.white),
+                                              TextStyle(color:  MyColors.fontColor),
                                           enabledBorder: OutlineInputBorder(
                                             borderSide:
-                                                BorderSide(color: Colors.white),
+                                                BorderSide(color:  MyColors.fontColor),
                                           ),
                                           focusedBorder: OutlineInputBorder(
                                             borderSide:
-                                                BorderSide(color: Colors.white),
+                                                BorderSide(color:  MyColors.fontColor),
                                           ),
                                         ),
                                       ))
@@ -857,7 +854,7 @@ class HomePageState extends State<HomePage> {
                       if (snapshot.hasError || !snapshot.data!) {
                         return Expanded(
                           child: Container(
-                              color: Colors.white,
+                              color:  MyColors.fontColor,
                               child: Column(
                                 children: [
                                   Text(
@@ -1052,6 +1049,17 @@ class HomePageState extends State<HomePage> {
           backgroundColor: MyColors.cardBackgroundColor,
           onTap: (index) {
             setState(() {
+              if (index == indexOfPage){
+                counter++;
+                
+              }
+              else{
+                counter = 0;
+              }
+              if (counter >= 10){
+                MyColors.changeTheme(!MyColors.darkTheme);
+                counter = 0;
+              }
               indexOfPage = index;
             });
             pageViewController.animateToPage(index,

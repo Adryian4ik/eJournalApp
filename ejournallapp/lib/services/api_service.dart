@@ -45,7 +45,6 @@ class Group {
     if (response.statusCode != 200) {
       return false;
     }
-    groupId = 10; //??? убрать потом
     students = responseBody['detail'];
     return true;
   }

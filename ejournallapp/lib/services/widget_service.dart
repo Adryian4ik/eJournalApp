@@ -55,11 +55,11 @@ Widget cardBoxOfStudent(List studentList, bool leftButton, bool rightButton,
   return Padding(
     padding: const EdgeInsets.all(5),
     child: Card(
-      color: const Color.fromARGB(0, 0, 0, 0),
-      shape: const RoundedRectangleBorder(
+      color: MyColors.backgroundColor,
+      shape:  RoundedRectangleBorder(
         //<-- SEE HERE
         side: BorderSide(
-          color: Colors.white,
+          color: MyColors.fontColor
         ),
       ),
       child: Padding(

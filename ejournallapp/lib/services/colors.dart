@@ -22,7 +22,6 @@ class MyColors{
         fontColor = const Color.fromARGB(255, 255, 255, 255);
         progressBarColor = const Color.fromARGB(255, 255, 255, 255);
         errorMessageColor = const Color.fromARGB(255, 255, 0, 0);
-
       }
       else{
         headerColor = const Color.fromARGB(255, 128, 192, 64);
